@@ -257,7 +257,7 @@ public class Main {
 		readMatrixData(A, B);
 		System.out.println("Read matrix data!\n");
 		
-		// Times matrices
+		// Multiply matrices
 		// A.i = m length
 		// C.i = n length
 		// B.j = p length
