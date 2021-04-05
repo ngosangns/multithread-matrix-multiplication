@@ -143,6 +143,9 @@ class CThreadCalculateCMatrixData extends Thread {
 				p = mp%B.j;
 			
 			// Check if end of array
+			if(mp >= A.i * B.j) {
+				return;
+			}
 			
 			C.data[mp][n] = A.data[m][n] * B.data[n][p];
 		}
@@ -172,6 +175,11 @@ class CThreadCalculateDMatrixData extends Thread {
 			int mp = i,
 				m = mp/B.j,
 				p = mp%B.j;
+			
+			// Check if end of array
+			if(mp >= A.i * B.j) {
+				return;
+			}
 			
 			D.data[m][p] = 0;
 			for(int j = 0; j < C.j; j++) {
