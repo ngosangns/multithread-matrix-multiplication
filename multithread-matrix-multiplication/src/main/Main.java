@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 class Matrix {
-	int[][] data;
+	short[][] data;
 	int i, j;
 	
 	Matrix() {}
@@ -16,11 +16,11 @@ class Matrix {
 	public void createData(int i, int j, int max) {
 		this.i = i;
 		this.j = j;
-		data = new int[this.i][this.j];
+		data = new short[this.i][this.j];
 		Random rand = new Random();
 		for(i = 0; i < this.i; i++) {
 			for(j = 0; j < this.j; j++) {
-				this.data[i][j] = rand.nextInt(max+1);
+				this.data[i][j] = (short)rand.nextInt(max+1);
 			}
 		}
 	}
@@ -68,10 +68,10 @@ class Matrix {
 			}
 			
 			// Convert to 2D array data
-			this.data = new int[this.i][this.j];
+			this.data = new short[this.i][this.j];
 			for(int i = 0; i < this.i; i++) {
 				for(int j = 0; j < this.j; j++) {
-					this.data[i][j] = Integer.parseInt(list.get(i)[j]);
+					this.data[i][j] = (short)Integer.parseInt(list.get(i)[j]);
 				}
 			}
 			
@@ -85,7 +85,7 @@ class Matrix {
 	public void createEmptyData(int i, int j) {
 		this.i = i;
 		this.j = j;
-		this.data = new int[i][j];
+		this.data = new short[i][j];
 	}
 }
 
@@ -147,7 +147,7 @@ class CThreadCalculateCMatrixData extends Thread {
 				return;
 			}
 			
-			C.data[mp][n] = A.data[m][n] * B.data[n][p];
+			C.data[mp][n] = ((short) (A.data[m][n] * B.data[n][p]));
 		}
 	}
 }
@@ -260,11 +260,98 @@ public class Main {
 		}
 		
 		// Read matrix data just be created from file
-		Matrix A = new Matrix();
-		Matrix B = new Matrix();
+		Matrix A = new Matrix(), B = new Matrix(), D;
 		readMatrixData(A, B);
 		System.out.println("Read matrix data!\n");
 		
+		System.out.print("Compare with single-thread? (y/N): ");
+		sc = new Scanner(System.in);
+		opt = sc.nextLine();
+		
+		System.out.print("Print result? (y/N): ");
+		sc = new Scanner(System.in);
+		String opt2 = sc.nextLine();
+		
+		// Compare with single-thread
+		if(opt.equals("y")) {
+			long start, end;
+			
+			System.out.println("Single-thread process...");
+			start = System.currentTimeMillis();
+			multiply(A, B);
+			end = System.currentTimeMillis();
+			System.out.println("Single-thread processed! Time taken: " + (end - start) + "ms.");
+			
+			System.out.println("Multi-thread process...");
+			start = System.currentTimeMillis();
+			D = threadMultiply(A, B);
+			end = System.currentTimeMillis();
+			System.out.println("Multi-thread processed! Time taken: " + (end - start) + "ms.");
+			
+		} else { // Only multi-thread
+			D = threadMultiply(A, B);
+		}
+		
+		// Print result
+		System.out.println();
+		System.out.println("Matrix A (" + A.j + "x" + A.j + ").");
+		System.out.println("Matrix B (" + B.j + "x" + B.j + ").");
+		System.out.println("Result   (" + D.j + "x" + D.j + ").");
+		if(opt2.equals("y"))
+			printResult(A, B, D);
+		System.out.print("\n\nExited.");
+	}
+	
+	public static void multiply(Matrix A, Matrix B) throws InterruptedException {
+		// Multiply matrices
+		// A.i = m length
+		// C.i = n length
+		// B.j = p length
+		// A[m x n] * B[n x p] = D[m x p]
+		// C[n x mp] => sum all element of each row of C => C[1 x mp] => 2D => D
+		Matrix C = new Matrix();
+		C.createEmptyData(A.i * B.j, A.j);
+		Matrix D = new Matrix();
+		D.createEmptyData(A.i, B.j);
+
+		for(int i = 0; i < A.i * A.j * B.j; i++) {
+			// A.i = m length
+			// C.j = n length
+			// B.j = p length
+			int n = i%C.j,
+				mp = i/C.j,
+				m = mp/B.j,
+				p = mp%B.j;
+			
+			// Check if end of array
+			if(mp >= A.i * B.j) {
+				return;
+			}
+			
+			C.data[mp][n] = (short) (A.data[m][n] * B.data[n][p]);
+		}
+		
+		for(int i = 0; i < A.i * B.j; i++) {
+			// A.i = m length
+			// C.j = n length
+			// B.j = p length
+			int mp = i,
+				m = mp/B.j,
+				p = mp%B.j;
+			
+			// Check if end of array
+			if(mp >= A.i * B.j) {
+				return;
+			}
+			
+			D.data[m][p] = 0;
+			for(int j = 0; j < C.j; j++) {
+				D.data[m][p] += C.data[mp][j];
+			}
+		}
+	}
+	
+	public static Matrix threadMultiply(Matrix A, Matrix B) throws InterruptedException {
 		// Multiply matrices
 		// A.i = m length
 		// C.i = n length
@@ -313,6 +400,10 @@ public class Main {
 			coreDThreads[i].join();
 		}
 		
+		return D;
+	}
+	public static void printResult(Matrix A, Matrix B, Matrix D) {
+		System.out.println();
 		// Write result
 		System.out.println("Matrix A: ");
 		printMatrix(A);
@@ -320,7 +411,5 @@ public class Main {
 		printMatrix(B);
 		System.out.println("Result: ");
 		printMatrix(D);
-		
-		System.out.print("\n\nExited.");
 	}
 }
