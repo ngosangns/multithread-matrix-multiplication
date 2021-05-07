@@ -1,5 +1,3 @@
-package main;
-
 import java.io.*;
 import java.lang.Thread;
 import java.util.Scanner;
@@ -237,7 +235,7 @@ public class Main {
 	}
 	
 	public static void main(String[] args) throws InterruptedException {
-		System.out.print("Create new matrix data? (y/N): ");
+		System.out.print("Create a new matrix data? (y/N): ");
 		Scanner sc = new Scanner(System.in);
 		String opt = sc.nextLine();
 		
